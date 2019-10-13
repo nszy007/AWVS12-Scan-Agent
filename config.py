@@ -5,7 +5,8 @@ class define:
     RED         = "\033[0;31m"
     BLUE        = "\033[94m"
     ORANGE      = "\033[33m"
-    host        = "https://127.0.0.1:3443/"     #端口后面一定要加/
+    maxscans    = 5 #配置最大并发扫描任务数
+    host        = "https://localhost:8881/"     #端口后面一定要加/
     api_key     = ""                            #替换此处apikey
     api_header  = {'X-Auth':api_key,'content-type':'application/json'}
     filename    = 'out/%s.xlsx' % time.strftime("%Y-%m-%d-%H-%M", time.localtime(time.time()))
@@ -29,7 +30,7 @@ class define:
                 (
                  ^---'
 
-    [*] Author:dacAIniao@重明安全
+    [*] Author:dacAIniao@重明安全   Modified by nszy007
     [*] Web:chmsec.com
     '''
     usage = '''
