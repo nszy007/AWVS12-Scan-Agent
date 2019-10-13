@@ -2,11 +2,30 @@ import requests
 import json
 import tableprint
 import os
+import time
 import sys
 import openpyxl as ws
 from config import *
+
+
 requests.packages.urllib3.disable_warnings()
 
+def get_onlinescans():
+    count = 0
+    list_scan_info = []
+    response = requests.get(define.host + "/api/v1/scans", headers=define.api_header, timeout=30, verify=False)
+    results = json.loads(response.content)
+    for result in results['scans']:
+        scan_info = {'target': result['target']['address'],
+                     'description': result['target']['description'],
+                     'scan_id': result['scan_id'],
+                     'report_id': result['current_session']['scan_session_id'],
+                     'status': result['current_session']['status']}
+        list_scan_info.append(scan_info)
+    for i in range(len(list_scan_info)):
+        if list_scan_info[i]['status'] == 'processing':
+            count = count + 1     
+    return count
 
 def get_scans():
     creat_xlsx()
@@ -83,7 +102,7 @@ def creat_xlsx():
         print(define.RED+"[*]文件已存在 文件为:%s"%define.filename)
 
 
-x=[]
+x = []
 
 def task(files):
     s = open('%s'%files,'r')
@@ -134,18 +153,30 @@ if __name__ == '__main__':
         print(define.ORANGE+define.usage)
     elif sys.argv[1] == '-f':
         try:
-            if len(sys.argv) > 2:
+            if len(sys.argv) > 3:
                 rule = sys.argv[3]
                 task(str(sys.argv[2]))
                 print(define.RED+"[*]扫描开始添加")
                 for s in x:
-                    single_scan(s,rule)
+                    while True:
+                        if get_onlinescans() < define.maxscans:
+                            single_scan(s, rule)
+                            time.sleep(5)
+                            break
+                        print('[-] 当前已达到最大并发扫描数，等待5分钟后自动再次尝试！')
+                        time.sleep(300)
                 print(define.RED+"[*]扫描添加完毕")
-            if len(sys.argv) = 2:
+            if len(sys.argv) == 3:
                 task(str(sys.argv[2]))
                 print(define.RED+"[*]扫描开始添加")
                 for s in x:
-                    single_scan(s)
+                    while True:
+                        if get_onlinescans() < define.maxscans:
+                            single_scan(s)
+                            time.sleep(5)
+                            break
+                        print('[-] 当前已达到最大并发扫描数，等待5分钟后自动再次尝试！')
+                        time.sleep(300)
                 print(define.RED+"[*]扫描添加完毕")
         except:
             print(define.BLUE+'    [*]Usage example: Python3 Acunetix12-Scan-Agent.py -f url.txt')
